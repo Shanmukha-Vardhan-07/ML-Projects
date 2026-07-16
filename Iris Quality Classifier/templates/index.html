@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iris Species Classifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">Beginner ML Series · Classification</span>
+    <h1>What flower is this?</h1>
+    <p class="sub">Move the four measurements below. A KNN model trained on the classic Iris dataset predicts the species — and the sketch redraws itself to match.</p>
+  </header>
+
+  <main class="layout">
+
+    <!-- LEFT: Controls -->
+    <section class="panel controls-panel">
+      <form method="POST" action="/predict" id="iris-form">
+
+        <div class="field-group">
+          <div class="field-label-row">
+            <label for="sepal_length">Sepal length</label>
+            <span class="readout" id="sepal_length_out">{{ values.sepal_length }}</span>
+          </div>
+          <input type="range" id="sepal_length" name="sepal_length" min="4.0" max="8.0" step="0.1" value="{{ values.sepal_length }}" class="slider sepal-slider">
+          <div class="range-caps"><span>4.0 cm</span><span>8.0 cm</span></div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label-row">
+            <label for="sepal_width">Sepal width</label>
+            <span class="readout" id="sepal_width_out">{{ values.sepal_width }}</span>
+          </div>
+          <input type="range" id="sepal_width" name="sepal_width" min="1.8" max="4.6" step="0.1" value="{{ values.sepal_width }}" class="slider sepal-slider">
+          <div class="range-caps"><span>1.8 cm</span><span>4.6 cm</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field-group">
+          <div class="field-label-row">
+            <label for="petal_length">Petal length</label>
+            <span class="readout" id="petal_length_out">{{ values.petal_length }}</span>
+          </div>
+          <input type="range" id="petal_length" name="petal_length" min="1.0" max="7.0" step="0.1" value="{{ values.petal_length }}" class="slider petal-slider">
+          <div class="range-caps"><span>1.0 cm</span><span>7.0 cm</span></div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label-row">
+            <label for="petal_width">Petal width</label>
+            <span class="readout" id="petal_width_out">{{ values.petal_width }}</span>
+          </div>
+          <input type="range" id="petal_width" name="petal_width" min="0.1" max="2.6" step="0.1" value="{{ values.petal_width }}" class="slider petal-slider">
+          <div class="range-caps"><span>0.1 cm</span><span>2.6 cm</span></div>
+        </div>
+
+        <button type="submit" class="predict-btn">Classify this flower</button>
+      </form>
+    </section>
+
+    <!-- RIGHT: Sketch + Result -->
+    <section class="panel sketch-panel">
+      <div class="sketch-frame">
+        <svg id="flower-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+          <!-- sepals: back layer, wider + rounder -->
+          <g id="sepal-group" fill="var(--sepal-green)" opacity="0.9">
+            <ellipse class="sepal" cx="160" cy="160" rx="10" ry="10"></ellipse>
+            <ellipse class="sepal" cx="160" cy="160" rx="10" ry="10"></ellipse>
+            <ellipse class="sepal" cx="160" cy="160" rx="10" ry="10"></ellipse>
+          </g>
+          <!-- petals: front layer, narrower -->
+          <g id="petal-group" fill="var(--iris-violet)">
+            <ellipse class="petal" cx="160" cy="160" rx="10" ry="10"></ellipse>
+            <ellipse class="petal" cx="160" cy="160" rx="10" ry="10"></ellipse>
+            <ellipse class="petal" cx="160" cy="160" rx="10" ry="10"></ellipse>
+          </g>
+          <circle cx="160" cy="160" r="9" fill="var(--petal-pink)"></circle>
+        </svg>
+        <span class="sketch-caption">Sketch scales live with your sliders</span>
+      </div>
+
+      {% if result %}
+        {% if result.error %}
+          <div class="result-card error-card">
+            <p>{{ result.error }}</p>
+          </div>
+        {% else %}
+          <div class="result-card">
+            <span class="result-eyebrow">Predicted species</span>
+            <h2 class="result-species">{{ result.common_name }}</h2>
+            <p class="result-latin">{{ result.species }}</p>
+            {% if result.confidence %}
+              <div class="confidence-row">
+                <div class="confidence-bar"><div class="confidence-fill" style="width: {{ result.confidence }}%;"></div></div>
+                <span class="confidence-label">{{ result.confidence }}% confidence</span>
+              </div>
+            {% endif %}
+            <p class="result-fact">{{ result.fact }}</p>
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="result-card placeholder-card">
+          <span class="result-eyebrow">No prediction yet</span>
+          <p>Set your measurements and press <strong>Classify this flower</strong>.</p>
+        </div>
+      {% endif %}
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <span>KNN classifier · scikit-learn · Iris dataset</span>
+  </footer>
+
+</div>
+
+<script>
+  const inputs = {
+    sepal_length: document.getElementById('sepal_length'),
+    sepal_width: document.getElementById('sepal_width'),
+    petal_length: document.getElementById('petal_length'),
+    petal_width: document.getElementById('petal_width'),
+  };
+
+  const outs = {
+    sepal_length: document.getElementById('sepal_length_out'),
+    sepal_width: document.getElementById('sepal_width_out'),
+    petal_length: document.getElementById('petal_length_out'),
+    petal_width: document.getElementById('petal_width_out'),
+  };
+
+  const sepalEls = document.querySelectorAll('.sepal');
+  const petalEls = document.querySelectorAll('.petal');
+  const CENTER = 160;
+
+  function map(val, inMin, inMax, outMin, outMax) {
+    return outMin + ( (val - inMin) / (inMax - inMin) ) * (outMax - outMin);
+  }
+
+  function drawFlower() {
+    const sl = parseFloat(inputs.sepal_length.value);
+    const sw = parseFloat(inputs.sepal_width.value);
+    const pl = parseFloat(inputs.petal_length.value);
+    const pw = parseFloat(inputs.petal_width.value);
+
+    // sepal reach + width, mapped to pixel radii
+    const sepalReach = map(sl, 4.0, 8.0, 55, 118);
+    const sepalWidth  = map(sw, 1.8, 4.6, 16, 42);
+
+    const petalReach = map(pl, 1.0, 7.0, 35, 115);
+    const petalWidth  = map(pw, 0.1, 2.6, 10, 34);
+
+    sepalEls.forEach((el, i) => {
+      const angle = -90 + i * 120; // 3 sepals, evenly spaced
+      const rad = angle * Math.PI / 180;
+      const cx = CENTER + Math.cos(rad) * (sepalReach * 0.55);
+      const cy = CENTER + Math.sin(rad) * (sepalReach * 0.55);
+      el.setAttribute('cx', cx);
+      el.setAttribute('cy', cy);
+      el.setAttribute('rx', sepalReach * 0.5);
+      el.setAttribute('ry', sepalWidth * 0.5);
+      el.setAttribute('transform', `rotate(${angle + 90} ${cx} ${cy})`);
+    });
+
+    petalEls.forEach((el, i) => {
+      const angle = -30 + i * 120; // offset from sepals
+      const rad = angle * Math.PI / 180;
+      const cx = CENTER + Math.cos(rad) * (petalReach * 0.5);
+      const cy = CENTER + Math.sin(rad) * (petalReach * 0.5);
+      el.setAttribute('cx', cx);
+      el.setAttribute('cy', cy);
+      el.setAttribute('rx', petalReach * 0.45);
+      el.setAttribute('ry', petalWidth * 0.5);
+      el.setAttribute('transform', `rotate(${angle + 90} ${cx} ${cy})`);
+    });
+  }
+
+  Object.keys(inputs).forEach((key) => {
+    inputs[key].addEventListener('input', () => {
+      outs[key].textContent = parseFloat(inputs[key].value).toFixed(1);
+      drawFlower();
+    });
+  });
+
+  drawFlower();
+</script>
+
+</body>
+</html>

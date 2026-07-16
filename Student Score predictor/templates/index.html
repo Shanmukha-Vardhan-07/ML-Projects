@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Score Predictor</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🎓 Student Score Predictor</h1>
+    <p class="subtitle">Predict the Final Grade (G3)</p>
+
+    <form action="/predict" method="POST">
+
+        <div class="input-group">
+            <label>Study Time (1-4)</label>
+            <input type="number" name="studytime" min="1" max="4" required>
+        </div>
+
+        <div class="input-group">
+            <label>First Period Grade (G1)</label>
+            <input type="number" name="G1" min="0" max="20" required>
+        </div>
+
+        <div class="input-group">
+            <label>Second Period Grade (G2)</label>
+            <input type="number" name="G2" min="0" max="20" required>
+        </div>
+
+        <div class="input-group">
+            <label>Mother's Education (0-4)</label>
+            <input type="number" name="Medu" min="0" max="4" required>
+        </div>
+
+        <div class="input-group">
+            <label>Father's Education (0-4)</label>
+            <input type="number" name="Fedu" min="0" max="4" required>
+        </div>
+
+        <button type="submit">Predict Score</button>
+
+    </form>
+
+    {% if prediction_text %}
+        <div class="result">
+            {{ prediction_text }}
+        </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Approval Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Loan Approval Predictor</h1>
+      <p class="subtitle">Fill in the applicant details to check loan approval likelihood</p>
+    </header>
+
+    <form action="/predict" method="POST" class="loan-form">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="Gender">Gender</label>
+          <select id="Gender" name="Gender" required>
+            <option value="Male" {% if form_data and form_data.get('Gender') == 'Male' %}selected{% endif %}>Male</option>
+            <option value="Female" {% if form_data and form_data.get('Gender') == 'Female' %}selected{% endif %}>Female</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Married">Married</label>
+          <select id="Married" name="Married" required>
+            <option value="No" {% if form_data and form_data.get('Married') == 'No' %}selected{% endif %}>No</option>
+            <option value="Yes" {% if form_data and form_data.get('Married') == 'Yes' %}selected{% endif %}>Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Dependents">Dependents</label>
+          <select id="Dependents" name="Dependents" required>
+            <option value="0" {% if form_data and form_data.get('Dependents') == '0' %}selected{% endif %}>0</option>
+            <option value="1" {% if form_data and form_data.get('Dependents') == '1' %}selected{% endif %}>1</option>
+            <option value="2" {% if form_data and form_data.get('Dependents') == '2' %}selected{% endif %}>2</option>
+            <option value="3+" {% if form_data and form_data.get('Dependents') == '3+' %}selected{% endif %}>3+</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Education">Education</label>
+          <select id="Education" name="Education" required>
+            <option value="Graduate" {% if form_data and form_data.get('Education') == 'Graduate' %}selected{% endif %}>Graduate</option>
+            <option value="Not Graduate" {% if form_data and form_data.get('Education') == 'Not Graduate' %}selected{% endif %}>Not Graduate</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Self_Employed">Self Employed</label>
+          <select id="Self_Employed" name="Self_Employed" required>
+            <option value="No" {% if form_data and form_data.get('Self_Employed') == 'No' %}selected{% endif %}>No</option>
+            <option value="Yes" {% if form_data and form_data.get('Self_Employed') == 'Yes' %}selected{% endif %}>Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Property_Area">Property Area</label>
+          <select id="Property_Area" name="Property_Area" required>
+            <option value="Urban" {% if form_data and form_data.get('Property_Area') == 'Urban' %}selected{% endif %}>Urban</option>
+            <option value="Semiurban" {% if form_data and form_data.get('Property_Area') == 'Semiurban' %}selected{% endif %}>Semiurban</option>
+            <option value="Rural" {% if form_data and form_data.get('Property_Area') == 'Rural' %}selected{% endif %}>Rural</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="ApplicantIncome">Applicant Income</label>
+          <input type="number" id="ApplicantIncome" name="ApplicantIncome" min="0" step="1"
+                 value="{{ form_data.get('ApplicantIncome') if form_data else '' }}" placeholder="e.g. 5000" required>
+        </div>
+
+        <div class="form-group">
+          <label for="CoapplicantIncome">Coapplicant Income</label>
+          <input type="number" id="CoapplicantIncome" name="CoapplicantIncome" min="0" step="1"
+                 value="{{ form_data.get('CoapplicantIncome') if form_data else '' }}" placeholder="e.g. 0" required>
+        </div>
+
+        <div class="form-group">
+          <label for="LoanAmount">Loan Amount (in thousands)</label>
+          <input type="number" id="LoanAmount" name="LoanAmount" min="0" step="1"
+                 value="{{ form_data.get('LoanAmount') if form_data else '' }}" placeholder="e.g. 128" required>
+        </div>
+
+        <div class="form-group">
+          <label for="Loan_Amount_Term">Loan Amount Term (days)</label>
+          <input type="number" id="Loan_Amount_Term" name="Loan_Amount_Term" min="0" step="1"
+                 value="{{ form_data.get('Loan_Amount_Term') if form_data else '360' }}" placeholder="e.g. 360" required>
+        </div>
+
+        <div class="form-group">
+          <label for="Credit_History">Credit History</label>
+          <select id="Credit_History" name="Credit_History" required>
+            <option value="1" {% if form_data and form_data.get('Credit_History') == '1' %}selected{% endif %}>Good (1)</option>
+            <option value="0" {% if form_data and form_data.get('Credit_History') == '0' %}selected{% endif %}>Bad (0)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <button type="submit" class="submit-btn">Check Loan Status</button>
+    </form>
+
+    {% if result %}
+      <div class="result-box {{ result.status }}">
+        {% if result.status == 'approved' %}
+          <h2>✅ Approved</h2>
+        {% elif result.status == 'rejected' %}
+          <h2>❌ Rejected</h2>
+        {% else %}
+          <h2>⚠️ Error</h2>
+        {% endif %}
+        <p>{{ result.message }}</p>
+        {% if result.confidence %}
+          <p class="confidence">Model confidence: {{ result.confidence }}%</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</body>
+</html>
